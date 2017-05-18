@@ -36,7 +36,8 @@
     }
 
     .radio {
-      padding-left: 5px;
+      padding-left: 10px;
+      padding-right: 15px;
       border: 1px solid rgba(0, 0, 0, 0.5);
       border-radius: 5px;
     }
@@ -45,13 +46,21 @@
 
 <body>
 
+<div class="page-header text-center">
+  <h1>Click Map</h1>
+</div>
 <div class="container-fluid fillVertical">
   <div class="row fillVertical">
     <div class="col-md-2">
-      <div id="eventTypeButtons" onerror=""class="form-group">
-        <h4>Event types:</h4>
+      <div class="form-group">
+        <label for="eventTypeButtons">Event Types</label>
+        <div id="eventTypeButtons" class="btn-group"></div>
       </div>
-      <button id="downloadButton" class="btn btn-default">Download Data</button>
+      <div class="form-group">
+        <label for="fileNameInput">File Name</label>
+        <input id="fileNameInput" type="text" class="form-control" value="Click Map.csv">
+      </div>
+      <button id="downloadButton" class="btn btn-primary">Download Data</button>
     </div>
     <div class="col-md-10 fillVertical">
       <div id="clickMap" class="panel panel-default fillVertical">
@@ -67,7 +76,7 @@
 <script type="text/javascript">
 
 // Add event types here
-var eventTypes = ["Made Shot", "Missed Shot"],
+var eventTypes = ["Made Shot", "Missed Shot", "Blocked Shot"],
     eventType = eventTypes[0],
     eventColor = d3.scaleOrdinal(d3.schemeCategory10)
         .domain(eventTypes);
@@ -115,7 +124,7 @@ function createControls() {
     // Create temporary download link for data
     var a = window.document.createElement('a');
     a.href = window.URL.createObjectURL(new Blob([data], {type: 'text/csv'}));
-    a.download = 'ClickMap.csv';
+    a.download = d3.select("#fileNameInput").property("value");
 
     // Append anchor to body
     document.body.appendChild(a)
