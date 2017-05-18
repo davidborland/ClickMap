@@ -51,6 +51,7 @@
       <div id="eventTypeButtons" onerror=""class="form-group">
         <h4>Event types:</h4>
       </div>
+      <button id="downloadButton" class="btn btn-default">Download Data</button>
     </div>
     <div class="col-md-10 fillVertical">
       <div id="clickMap" class="panel panel-default fillVertical">
@@ -66,7 +67,7 @@
 <script type="text/javascript">
 
 // Add event types here
-var eventTypes = ["madeShot", "missedShot"],
+var eventTypes = ["Made Shot", "Missed Shot"],
     eventType = eventTypes[0],
     eventColor = d3.scaleOrdinal(d3.schemeCategory10)
         .domain(eventTypes);
@@ -93,10 +94,36 @@ function createControls() {
   labelEnter.append("input")
       .attr("type", "radio")
       .attr("name", "eventTypeRadio")
-      .attr("value", function(d) { return d; });
+      .attr("value", function(d) { return d; })
+      .property("defaultChecked", function(d) { return d === eventType; });
 
   labelEnter.append("span")
       .text(function(d) { return d; });
+
+  // Download button
+  d3.select("#downloadButton").on("click", function() {
+    // Add columns for data
+    var data = "Event Type,x,y\n"
+
+    // Get event data
+    d3.select("#clickMap").selectAll(".event").each(function(d) {
+      var e = d3.select(this);
+
+      data += d + "," + e.attr("cx") + "," + e.attr("cy") + "\n";
+    });
+
+    // Create temporary download link for data
+    var a = window.document.createElement('a');
+    a.href = window.URL.createObjectURL(new Blob([data], {type: 'text/csv'}));
+    a.download = 'ClickMap.csv';
+
+    // Append anchor to body
+    document.body.appendChild(a)
+    a.click();
+
+    // Remove anchor from body
+    document.body.removeChild(a)
+  });
 }
 
 function createClickMap() {
@@ -119,7 +146,7 @@ function createClickMap() {
 
         svg.append("circle").datum(eventType)
             .attr("class", "event")
-            .attr("r", 5)
+            .attr("r", 10)
             .attr("cx", x)
             .attr("cy", y)
             .style("fill", function(d) {
