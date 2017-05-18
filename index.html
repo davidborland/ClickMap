@@ -1,0 +1,115 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Click Map</title>
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+
+  <style>
+    body, html {
+      height: 100%;
+      overflow-y: hidden;
+    }
+
+    #clickMap {
+      width: 100%;
+    }
+
+    .event {
+      fill-opacity: 0.5;
+      stroke: black;
+      stroke-opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .fillVertical {
+      height: 100%;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container-fluid fillVertical">
+  <div class="row fillVertical">
+    <div class="col-md-2">
+      <h4>Event types:</h4>
+      <select class="form-control" id="eventTypeSelect"></select>
+    </div>
+    <div class="col-md-10 fillVertical">
+      <div id="clickMap" class="panel panel-default fillVertical">
+        <svg width="100%" height="100%">
+          <image xlink:href="/images/circle.svg" height="100%" width="100%"/>
+          <rect id="background"></rect>
+        <svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+// Add event types here
+var eventTypes = ["madeShot", "missedShot"],
+    eventType = eventTypes[0];
+
+createControls();
+createClickMap();
+
+function createControls() {
+  // Event type select
+  d3.select("#eventTypeSelect")
+    .on("change", function() {
+      eventType = this.value;
+    })
+    .selectAll("option")
+      .data(eventTypes)
+    .enter().append("option")
+      .attr("value", function(d) { return d; })
+      .text(function(d) { return d; });
+}
+
+function createClickMap() {
+  // Event color
+  var eventColor = d3.scaleOrdinal(d3.schemeCategory10)
+      .domain(eventTypes);
+
+  // Select the svg element
+  var svg = d3.select("#clickMap").select("svg");
+
+  // Fit to available space
+  var width = parseInt(svg.style("width"), 10),
+      height = parseInt(svg.style("height"), 10),
+      size = Math.min(width, height);
+
+  svg .attr("width", width)
+      .attr("height", height);
+
+  // Receive click events on background
+  d3.select("#background")
+      .attr("width", "100%")
+      .attr("height", "100%")
+      .style("visibility", "hidden")
+      .style("pointer-events", "all")
+      .on("click", function() {
+        var x = d3.mouse(this)[0],
+            y = d3.mouse(this)[1];
+
+        svg.append("circle").datum(eventType)
+            .attr("class", "event")
+            .attr("r", 5)
+            .attr("cx", x)
+            .attr("cy", y)
+            .style("fill", function(d) {
+              return eventColor(d);
+            });
+      });
+}
+
+</script>
+</body>
+</html>
