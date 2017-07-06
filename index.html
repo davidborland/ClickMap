@@ -174,14 +174,21 @@ function createControls() {
 
   // Download button
   d3.select("#downloadButton").on("click", function() {
-    // Add columns for data
-    var data = "Event Type,x,y\n"
+    var data = [],
+        columns = [];
 
     // Get event data
-    d3.select("#clickMap").selectAll(".event").each(function(d) {
-      var e = d3.select(this);
+    d3.select("#clickMap").selectAll(".event").each(function(d, i) {
+      if (i === 0) {
+        // Get columns from first event
+        columns = d3.keys(d);
+        data = columns.join(",") + "\n";
+      }
 
-      data += d + "," + e.attr("cx") + "," + e.attr("cy") + "\n";
+      // Add event data
+      data += columns.map(function(column) {
+        return d[column];
+      }).join(",") + "\n";
     });
 
     // Create temporary download link for data
