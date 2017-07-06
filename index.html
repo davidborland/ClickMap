@@ -71,8 +71,8 @@
         <div id="shotTypeButtons" class="btn-group"></div>
       </div>
       <div class="form-group">
-        <label for="fileNameInput">Output File Name</label><br>
-        <input id="fileNameInput" type="text" class="form-control" value="Click Map.csv">
+        <label for="filenameInput">Output Filename</label><br>
+        <input id="filenameInput" type="text" class="form-control" value="Click Map.csv">
       </div>
       <button id="downloadButton" class="btn btn-primary">Download Data</button>
     </div>
@@ -89,7 +89,7 @@
 
 <script type="text/javascript">
 
-// Set roster file name here
+// Set roster filename here
 var rosterFileName = "/rosters/DavidsonRoster.txt";
 
 // Current player
@@ -231,7 +231,7 @@ d3.text(rosterFileName, function(error, rosterData) {
       // Create temporary download link for data
       var a = window.document.createElement('a');
       a.href = window.URL.createObjectURL(new Blob([data], {type: 'text/csv'}));
-      a.download = d3.select("#fileNameInput").property("value");
+      a.download = d3.select("#filenameInput").property("value");
 
       // Append anchor to body
       document.body.appendChild(a)
