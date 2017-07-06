@@ -38,8 +38,14 @@
     .radio {
       padding-left: 10px;
       padding-right: 15px;
-      border: 1px solid rgba(0, 0, 0, 0.5);
-      border-radius: 5px;
+    }
+
+    .radio span {
+      vertical-align: top;
+    }
+
+    .radio svg {
+      margin-left: 5px;
     }
   </style>
 </head>
@@ -53,11 +59,15 @@
   <div class="row fillVertical">
     <div class="col-md-2">
       <div class="form-group">
-        <label for="eventTypeButtons">Event Types</label>
-        <div id="eventTypeButtons" class="btn-group"></div>
+        <label for="pointTypeButtons">Points</label><br>
+        <div id="pointTypeButtons" class="btn-group"></div>
       </div>
       <div class="form-group">
-        <label for="fileNameInput">File Name</label>
+        <label class=for="shotTypeButtons">Shot Type</label>
+        <div id="shotTypeButtons" class="btn-group"></div>
+      </div>
+      <div class="form-group">
+        <label for="fileNameInput">Output File Name</label>
         <input id="fileNameInput" type="text" class="form-control" value="Click Map.csv">
       </div>
       <button id="downloadButton" class="btn btn-primary">Download Data</button>
@@ -75,19 +85,35 @@
 
 <script type="text/javascript">
 
-// Add event types here
-var eventTypes = ["Made Shot", "Missed Shot", "Blocked Shot"],
-    eventType = eventTypes[0],
-    eventColor = d3.scaleOrdinal(d3.schemeCategory10)
-        .domain(eventTypes);
+// Set roster file name here
+var rosterFileName = "/rosters/DavidsonRoster.txt";
+
+// Add point types here
+var pointTypes = ["3 pts", "2 pts", "0 (missed 3)", "0 (missed 2)"],
+    pointType = pointTypes[0];
+
+// Add shot types here
+var shotTypes = ["layup/dunk", "dribble jumper", "catch & shoot", "runner/floater", "post move"],
+    shotType = shotTypes[0];
+
+// Set up color and shape
+var eventColor = d3.scaleOrdinal()
+    .domain(pointTypes)
+    .range(d3.schemeCategory10);
+
+var eventShape = d3.scaleOrdinal()
+    .domain(shotTypes)
+    .range(d3.symbols);
+
+var shapeSize = 10;
 
 createControls();
 createClickMap();
 
 function createControls() {
-  // Crete radio buttons for event types
-  var labelEnter = d3.select("#eventTypeButtons").selectAll(".radio")
-      .data(eventTypes)
+  // Radio buttons for points
+  var pointEnter = d3.select("#pointTypeButtons").selectAll(".radio")
+      .data(pointTypes)
     .enter().append("div")
       .attr("class", "radio")
       .style("background-color", function(d) {
@@ -95,19 +121,56 @@ function createControls() {
         c.opacity = 0.5;
         return c;
       })
+      .style("border", "1px solid rgba(0, 0, 0, 0.5")
+      .style("border-radius", "5px")
       .on("click", function(d) {
-        eventType = d;
+        pointType = d;
       })
     .append("label");
 
-  labelEnter.append("input")
+  pointEnter.append("input")
       .attr("type", "radio")
-      .attr("name", "eventTypeRadio")
+      .attr("name", "pointTypeRadio")
       .attr("value", function(d) { return d; })
-      .property("defaultChecked", function(d) { return d === eventType; });
+      .property("defaultChecked", function(d) { return d === pointType; });
 
-  labelEnter.append("span")
+  pointEnter.append("span")
       .text(function(d) { return d; });
+
+  // Radio buttons for shot types
+  var shotEnter = d3.select("#shotTypeButtons").selectAll(".radio")
+      .data(shotTypes)
+    .enter().append("div")
+      .attr("class", "radio")
+      .on("click", function(d) {
+        shotType = d;
+      })
+    .append("label");
+
+  shotEnter.append("input")
+      .attr("type", "radio")
+      .attr("name", "shotTypeRadio")
+      .attr("value", function(d) { return d; })
+      .property("defaultChecked", function(d) { return d === shotType; });
+
+  shotEnter.append("span")
+      .text(function(d) { return d; });
+
+  var w = shapeSize * 2,
+      h = shapeSize * 2;
+
+  shotEnter.append("svg")
+      .attr("width", w)
+      .attr("height", h)
+    .append("g")
+      .attr("class", "event")
+      .attr("transform", function(d) {
+        return "translate(" + (w / 2) + "," + (h / 2) + ")";
+      })
+    .append("path")
+      .attr("d", function(d) {
+        return getShape(d)();
+      });
 
   // Download button
   d3.select("#downloadButton").on("click", function() {
@@ -150,18 +213,34 @@ function createClickMap() {
   // Receive click events on background
   d3.select(".background")
       .on("click", function() {
-        var x = d3.mouse(this)[0],
-            y = d3.mouse(this)[1];
+        // Get the data for this event
+        var data = {
+          x: d3.mouse(this)[0],
+          y: d3.mouse(this)[1],
+          pointType: pointType,
+          shotType: shotType
+        };
 
-        svg.append("circle").datum(eventType)
+        // Draw the event
+        svg.append("g").datum(data)
             .attr("class", "event")
-            .attr("r", 10)
-            .attr("cx", x)
-            .attr("cy", y)
+            .attr("transform", function(d) {
+              return "translate(" + d.x + "," + d.y + ")";
+            })
+          .append("path")
+            .attr("d", function(d) {
+              return getShape(d.shotType)();
+            })
             .style("fill", function(d) {
-              return eventColor(d);
+              return eventColor(d.pointType);
             });
       });
+}
+
+function getShape(shotType) {
+  return d3.symbol()
+    .type(eventShape(shotType))
+    .size(shapeSize * shapeSize);
 }
 
 </script>
