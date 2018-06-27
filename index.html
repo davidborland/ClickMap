@@ -19,7 +19,6 @@
       position: relative;
       margin-left: 10%;
       width: 80%;
-      background: url(/images/basketballCourt.png);
     }
 
     .image {
@@ -310,7 +309,7 @@ d3.text(rosterFileName, function(error, rosterData) {
           .on("click", function() {
             if (shotType === "remove") {
               d3.event.stopPropagation();
-              
+
               d3.select(this).remove();
 
               return;
