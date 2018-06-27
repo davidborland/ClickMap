@@ -16,18 +16,29 @@
     }
 
     #clickMap {
+      position: relative;
+      margin-left: 10%;
+      width: 80%;
+    }
+
+    .image {
+      width: 100%;
+      height: auto;
+    }
+
+    .svgDiv {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
       width: 100%;
     }
 
     .event {
-      fill-opacity: 0.5;
+      fill-opacity: 0.75;
       stroke: black;
-      stroke-opacity: 0.5;
+      stroke-opacity: 0.75;
       pointer-events: none;
-    }
-
-    .fillVertical {
-      height: 100%;
     }
 
     .background {
@@ -36,8 +47,8 @@
     }
 
     .radio {
-      padding-left: 10px;
-      padding-right: 15px;
+      padding-left: 10;
+      padding-right: 15;
     }
 
     .radio span {
@@ -55,8 +66,8 @@
 <div class="page-header text-center">
   <h1>Click Map</h1>
 </div>
-<div class="container-fluid fillVertical">
-  <div class="row fillVertical">
+<div class="container-fluid">
+  <div class="row">
     <div class="col-md-2">
       <div class="form-group">
         <label for="playerSelect">Player</label><br>
@@ -67,7 +78,7 @@
         <div id="pointTypeButtons" class="btn-group"></div>
       </div>
       <div class="form-group">
-        <label class=for="shotTypeButtons">Shot Type</label><br>
+        <label for="shotTypeButtons">Shot Type</label><br>
         <div id="shotTypeButtons" class="btn-group"></div>
       </div>
       <div class="form-group">
@@ -76,12 +87,16 @@
       </div>
       <button id="downloadButton" class="btn btn-primary">Download Data</button>
     </div>
-    <div class="col-md-10 fillVertical">
-      <div id="clickMap" class="panel panel-default fillVertical">
-        <svg width="100%" height="100%">
-          <image xlink:href="/images/circle.svg" height="100%" width="100%"/>
-          <rect class="background" width="100%" height="100%"></rect>
-        <svg>
+    <div class="col-md-10">
+      <div class="panel panel-default">
+        <div id="clickMap">
+          <img src="/images/basketballCourt.png" class="image" />
+          <div class="svgDiv">
+            <svg width="100%" height="100%">
+              <rect class="background" width="100%" height="100%" />
+            </svg>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -155,7 +170,7 @@ d3.text(rosterFileName, function(error, rosterData) {
         .attr("class", "radio")
         .style("background-color", function(d) {
           var c = d3.color(eventColor(d));
-          c.opacity = 0.5;
+          c.opacity = 0.75;
           return c;
         })
         .style("border", "1px solid rgba(0, 0, 0, 0.5")
@@ -246,21 +261,22 @@ d3.text(rosterFileName, function(error, rosterData) {
     // Select the svg element
     var svg = d3.select("#clickMap").select("svg");
 
-    // Fit to available space
+    // Get the width and height
     var width = parseInt(svg.style("width"), 10),
-        height = parseInt(svg.style("height"), 10),
-        size = Math.min(width, height);
-
-    svg .attr("width", width)
-        .attr("height", height);
+        height = parseInt(svg.style("height"), 10);
 
     // Receive click events on background
     d3.select(".background")
         .on("click", function() {
-          // Get the data for this event
+          var x = d3.mouse(this)[0],
+              y = d3.mouse(this)[1];
+
+          // Set the data for this event
           var data = {
-            x: d3.mouse(this)[0],
-            y: d3.mouse(this)[1],
+            x: x,
+            y: y,
+            xNorm: x / width,
+            yNorm: y / height,
             playerName: player.name,
             pointType: pointType,
             shotType: shotType
