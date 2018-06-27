@@ -19,11 +19,16 @@
       position: relative;
       margin-left: 10%;
       width: 80%;
+      background: url(/images/basketballCourt.png);
     }
 
     .image {
       width: 100%;
       height: auto;
+      -webkit-user-select: none;  /* Chrome all / Safari all */
+      -moz-user-select: none;     /* Firefox all */
+      -ms-user-select: none;      /* IE 10+ */
+      user-select: none;          /* Likely future */
     }
 
     .svgDiv {
@@ -38,7 +43,6 @@
       fill-opacity: 0.75;
       stroke: black;
       stroke-opacity: 0.75;
-      pointer-events: none;
     }
 
     .background {
@@ -47,8 +51,8 @@
     }
 
     .radio {
-      padding-left: 10;
-      padding-right: 15;
+      padding-left: 10px;
+      padding-right: 15px;
     }
 
     .radio span {
@@ -87,10 +91,10 @@
       </div>
       <button id="downloadButton" class="btn btn-primary">Download Data</button>
     </div>
-    <div class="col-md-10">
+    <div class="col-md-8">
       <div class="panel panel-default">
         <div id="clickMap">
-          <img src="/images/basketballCourt.png" class="image" />
+          <img src="/images/basketballCourt.png" class="image" draggable="false" />
           <div class="svgDiv">
             <svg width="100%" height="100%">
               <rect class="background" width="100%" height="100%" />
@@ -98,6 +102,9 @@
           </div>
         </div>
       </div>
+    </div>
+    <div class="col-md-2">
+      <button id="clearButton" class="btn btn-primary">Clear All</button>
     </div>
   </div>
 </div>
@@ -115,7 +122,7 @@ var pointTypes = ["3 pts", "2 pts", "0 (missed 3)", "0 (missed 2)"],
     pointType = pointTypes[0];
 
 // Add shot types here
-var shotTypes = ["layup/dunk", "dribble jumper", "catch & shoot", "runner/floater", "post move"],
+var shotTypes = ["layup/dunk", "dribble jumper", "catch & shoot", "runner/floater", "post move", "remove"],
     shotType = shotTypes[0];
 
 // Set up color and shape
@@ -173,7 +180,7 @@ d3.text(rosterFileName, function(error, rosterData) {
           c.opacity = 0.75;
           return c;
         })
-        .style("border", "1px solid rgba(0, 0, 0, 0.5")
+        .style("border", "1px solid rgba(0, 0, 0, 0.75")
         .style("border-radius", "5px")
         .on("click", function(d) {
           pointType = d;
@@ -211,7 +218,9 @@ d3.text(rosterFileName, function(error, rosterData) {
     var w = shapeSize * 2,
         h = shapeSize * 2;
 
-    shotEnter.append("svg")
+    shotEnter.filter(function(d) {
+      return d !== "remove";
+    }).append("svg")
         .attr("width", w)
         .attr("height", h)
       .append("g")
@@ -255,9 +264,18 @@ d3.text(rosterFileName, function(error, rosterData) {
       // Remove anchor from body
       document.body.removeChild(a)
     });
+
+    // Clear button
+    d3.select("#clearButton").on("click", function() {
+      d3.select("#clickMap").selectAll(".event").remove();
+    });
   }
 
   function createClickMap() {
+    d3.select("#clickMap").select("img").on("click", function() {
+      d3.event.preventDefault();
+    });
+
     // Select the svg element
     var svg = d3.select("#clickMap").select("svg");
 
@@ -265,37 +283,47 @@ d3.text(rosterFileName, function(error, rosterData) {
     var width = parseInt(svg.style("width"), 10),
         height = parseInt(svg.style("height"), 10);
 
-    // Receive click events on background
-    d3.select(".background")
-        .on("click", function() {
-          var x = d3.mouse(this)[0],
-              y = d3.mouse(this)[1];
+    // Receive click events from background
+    svg.on("click", function() {
+      if (shotType === "remove") return;
 
-          // Set the data for this event
-          var data = {
-            x: x,
-            y: y,
-            xNorm: x / width,
-            yNorm: y / height,
-            playerName: player.name,
-            pointType: pointType,
-            shotType: shotType
-          };
+      var x = d3.mouse(this)[0],
+          y = d3.mouse(this)[1];
 
-          // Draw the event
-          svg.append("g").datum(data)
-              .attr("class", "event")
-              .attr("transform", function(d) {
-                return "translate(" + d.x + "," + d.y + ")";
-              })
-            .append("path")
-              .attr("d", function(d) {
-                return getShape(d.shotType)();
-              })
-              .style("fill", function(d) {
-                return eventColor(d.pointType);
-              });
-        });
+      // Set the data for this event
+      var data = {
+        x: x,
+        y: y,
+        xNorm: x / width,
+        yNorm: y / height,
+        playerName: player.name,
+        pointType: pointType,
+        shotType: shotType
+      };
+
+      // Draw the event
+      svg.append("g").datum(data)
+          .attr("class", "event")
+          .attr("transform", function(d) {
+            return "translate(" + d.x + "," + d.y + ")";
+          })
+          .on("click", function() {
+            if (shotType === "remove") {
+              d3.event.stopPropagation();
+              
+              d3.select(this).remove();
+
+              return;
+            }
+          })
+        .append("path")
+          .attr("d", function(d) {
+            return getShape(d.shotType)();
+          })
+          .style("fill", function(d) {
+            return eventColor(d.pointType);
+          });
+    });
   }
 });
 
