@@ -96,6 +96,10 @@
       </div>
     </div>
   </div>
+  <div class="text-right small">
+    <div>Author: David Borland, RENCI, UNC-Chapel Hill</div>
+    <div><a href="https://github.com/davidborland/ClickMap">GitHub repository</a></div>
+  </div>
 </div>
 
 <script type="text/javascript">
@@ -306,6 +310,7 @@ function createClickMap() {
       xNorm: x / width,
       yNorm: y / height,
       playerName: player.name,
+      playerNumber: player.number,
       pointType: pointType,
       shotType: shotType
     };
@@ -329,7 +334,7 @@ function createClickMap() {
         .style("fill", d => eventColor(d.pointType));
 
     g.append("title")
-        .text(d => d.playerName);
+        .text(d => "#" + d.playerNumber + " " + d.playerName);
   });
 }
 
