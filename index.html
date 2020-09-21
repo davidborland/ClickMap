@@ -53,12 +53,12 @@
 
 <body>
 
-<div class="page-header text-center">
-  <h1>Click Map</h1>
+<div class="text-center mb-5">
+  <h1 class="display-1">Click Map</h1>
 </div>
 <div class="container-fluid">
   <div class="row">
-    <div class="col-md-2">
+    <div class="col-md-3">
       <div class="custom-file mb-3">
         <input id="rosterUpload" type="file" class="custom-file-input"></input>
         <label class="custom-file-label" for="rosterUpload">Upload Roster</label>
@@ -72,16 +72,18 @@
         <div id="pointTypeButtons"></div>
       </div>
       <div class="form-group">
-        <label for="shotTypeButtons">Shot Type</label><br>
-        <div id="shotTypeButtons" class="btn-group"></div>
+        <label for="shotTypeButtons">Shot Type</label>
+        <div id="shotTypeButtons"></div>
+
+        <button id="clearButton" class="btn btn-primary">Clear All</button>
       </div>
       <div class="form-group">
         <label for="filenameInput">Output Filename</label>
-        <input id="filenameInput" type="text" class="form-control" value="Click Map.csv">
+        <input id="filenameInput" type="text" class="form-control mb-1" value="Click Map.csv">
+        <button id="downloadButton" class="btn btn-primary">Download Data</button>
       </div>
-      <button id="downloadButton" class="btn btn-primary">Download Data</button>
     </div>
-    <div class="col-md-8">
+    <div class="col-md-9">
       <div class="panel panel-default">
         <div id="clickMap">
           <img src="/images/basketballCourt.png" class="image" draggable="false" />
@@ -93,232 +95,243 @@
         </div>
       </div>
     </div>
-    <div class="col-md-2">
-      <button id="clearButton" class="btn btn-primary">Clear All</button>
-    </div>
   </div>
 </div>
 
 <script type="text/javascript">
 
-// Set roster filename here
-var rosterFileName = "/rosters/DavidsonRoster.txt";
-
 // Current player
-var player;
+let player = null;
 
 // Add point types here
-var pointTypes = ["3 pts", "2 pts", "0 (missed 3)", "0 (missed 2)"],
-    pointType = pointTypes[0];
+const pointTypes = ["3 pts", "2 pts", "0 (missed 3)", "0 (missed 2)"];
+let pointType = pointTypes[0];
 
 // Add shot types here
-var shotTypes = ["layup/dunk", "dribble jumper", "catch & shoot", "runner/floater", "post move", "remove"],
-    shotType = shotTypes[0];
+const shotTypes = ["layup/dunk", "dribble jumper", "catch & shoot", "runner/floater", "post move", "remove"];
+let shotType = shotTypes[0];
 
 // Set up color and shape
-var eventColor = d3.scaleOrdinal()
+const eventColor = d3.scaleOrdinal()
     .domain(pointTypes)
     .range(d3.schemeCategory10);
 
-var eventShape = d3.scaleOrdinal()
+const eventShape = d3.scaleOrdinal()
     .domain(shotTypes)
     .range(d3.symbols);
 
-var shapeSize = 10;
+const shapeSize = 10;
 
-d3.text(rosterFileName, function(error, rosterData) {
-  if (error) {
-    console.log(error);
+// Roster
+let roster = [];
+d3.select("#rosterUpload").on("change", function() {
+  if (this.files.length < 1) return;
+
+  const file = this.files[0];
+
+  if (file.type && file.type !== "text/plain") {
+    alert("File is not a text file");
+    return;
   }
 
-  var roster = d3.tsvParseRows(rosterData, function(d) {
-    return {
-      number: +d[0],
-      name: d[1]
-    };
+  const reader = new FileReader();
+  reader.addEventListener("load", event => {
+    const data = event.target.result;
+
+    roster = d3.tsvParseRows(data, d => {
+      return {
+        number: +d[0],
+        name: d[1]
+      };
+    });
+
+    if (roster.length > 0) player = roster[0];
+
+    createControls();
+    createClickMap();
+  });
+  reader.readAsText(file);  
+});
+
+createControls();
+createClickMap();
+
+function createControls() {
+  // Get player object from roster based on name
+  const getPlayer = name => roster[roster.map(d => d.name).indexOf(name)];
+
+  // Drop down for players
+  const playerOption = d3.select("#playerSelect")
+      .property("disabled", roster.length === 0)
+      .on("change", function() {
+        player = getPlayer(this.value);
+        
+        d3.select("#clickMap").select("svg").selectAll(".event")
+          .attr("transform", d => {
+            const scale = d.playerName === player.name ? 1 : 0.5;
+
+            return "translate(" + d.x + "," + d.y + ")scale(" + scale + ")";
+          });
+      })
+    .selectAll("option")
+      .data(roster);
+
+  playerOption.enter().append("option")
+      .attr("value", d => d.name)
+      .text(d => "#" + d.number + " " + d.name);
+
+  playerOption.exit().remove();
+
+  // Radio buttons for points
+  const pointEnter = d3.select("#pointTypeButtons").selectAll(".form-check")
+      .data(pointTypes)
+    .enter().append("div")
+      .attr("class", "form-check pl-4")
+      .style("background-color", d => {
+        const c = d3.color(eventColor(d));
+        c.opacity = 0.75;
+        return c;
+      })
+      .style("border", "1px solid rgba(0, 0, 0, 0.75")
+      .style("border-radius", "5px")
+      .on("click", d => pointType = d);
+
+  pointEnter.append("input")
+      .attr("type", "radio")
+      .attr("class", "form-check-input")
+      .attr("name", "pointTypeRadio")
+      .attr("id", d => d + "_radio")
+      .attr("value", d => d)
+      .property("defaultChecked", d => d === pointType);
+
+  pointEnter.append("label")
+      .text(d => d)
+      .attr("class", "form-check-label")
+      .attr("for", d => d + "_radio");
+
+  // Radio buttons for shot types
+  const shotEnter = d3.select("#shotTypeButtons").selectAll(".form-check")
+      .data(shotTypes)
+    .enter().append("div")
+      .attr("class", "form-check")
+      .on("click", d => shotType = d);
+
+  shotEnter.append("input")
+      .attr("type", "radio")
+      .attr("class", "form-check-input")
+      .attr("name", "shotTypeRadio")
+      .attr("id", d => d + "_radio")
+      .attr("value", d => d)
+      .property("defaultChecked", d => d === shotType);
+
+  shotEnter.append("label")
+      .text(d => d)
+      .attr("class", "form-check-label mr-1")
+      .attr("for", d => d + "_radio")
+      .style("vertical-align", "20%");
+
+  const w = shapeSize * 2;
+  const h = shapeSize * 2;
+
+  shotEnter.filter(d => d !== "remove").append("svg")
+      .attr("width", w)
+      .attr("height", h)
+    .append("g")
+      .attr("class", "event")
+      .attr("transform", d => "translate(" + (w / 2) + "," + (h / 2) + ")")
+    .append("path")
+      .attr("d", d => getShape(d)());
+
+  // Download button
+  d3.select("#downloadButton").on("click", () => {
+    let data = [];
+    let columns = [];
+
+    // Get event data
+    d3.select("#clickMap").selectAll(".event").each((d, i) => {
+      if (i === 0) {
+        // Get columns from first event
+        columns = d3.keys(d);
+        data = columns.join(",") + "\n";
+      }
+
+      // Add event data
+      data += columns.map(column => d[column]).join(",") + "\n";
+    });
+
+    // Create temporary download link for data
+    const a = window.document.createElement("a");
+    a.href = window.URL.createObjectURL(new Blob([data], {type: "text/csv"}));
+    a.download = d3.select("#filenameInput").property("value");
+
+    // Append anchor to body
+    document.body.appendChild(a)
+    a.click();
+
+    // Remove anchor from body
+    document.body.removeChild(a)
   });
 
-  if (roster.length > 0) player = roster[0];
+  // Clear button
+  d3.select("#clearButton").on("click", () => {
+    d3.select("#clickMap").selectAll(".event").remove();
+  });
+}
 
-  createControls();
-  createClickMap();
+function createClickMap() {
+  d3.select("#clickMap").select("img").on("click", () => {
+    d3.event.preventDefault();
+  });
 
-  function createControls() {
-    // Get player object from roster based on name
-    function getPlayer(name) {
-      return roster[roster.map(function(d) { return d.name; }).indexOf(name)];
-    }
+  // Select the svg element
+  const svg = d3.select("#clickMap").select("svg");
 
-    // Drop down for players
-    d3.select("#playerSelect")
-        .on("change", function(d) {
-          player = getPlayer(this.value);
-        })
-        .selectAll("option")
-        .data(roster)
-      .enter().append("option")
-        .attr("value", function(d) { return d.name; })
-        .text(function(d) { return "#" + d.number + " " + d.name; });
+  // Get the width and height
+  const width = parseInt(svg.style("width"), 10);
+  const height = parseInt(svg.style("height"), 10);
 
-    // Radio buttons for points
-    var pointEnter = d3.select("#pointTypeButtons").selectAll(".form-check")
-        .data(pointTypes)
-      .enter().append("div")
-        .attr("class", "form-check pl-4")
-        .style("background-color", function(d) {
-          var c = d3.color(eventColor(d));
-          c.opacity = 0.75;
-          return c;
-        })
-        .style("border", "1px solid rgba(0, 0, 0, 0.75")
-        .style("border-radius", "5px")
-        .on("click", function(d) {
-          pointType = d;
-        });
+  // Receive click events from background
+  svg.on("click", function() {
+    if (!player) return;
 
-    pointEnter.append("input")
-        .attr("type", "radio")
-        .attr("class", "form-check-input")
-        .attr("name", "pointTypeRadios")
-        .attr("id", function(d) { return d + "_radio"; })
-        .attr("value", function(d) { return d; })
-        .property("defaultChecked", function(d) { return d === pointType; });
+    if (shotType === "remove") return;
 
-    pointEnter.append("label")
-        .text(function(d) { return d; })
-        .attr("class", "form-check-label")
-        .attr("for", function(d) { return d + "_radio"; });
+    const x = d3.mouse(this)[0];
+    const y = d3.mouse(this)[1];
 
-    // Radio buttons for shot types
-    var shotEnter = d3.select("#shotTypeButtons").selectAll(".radio")
-        .data(shotTypes)
-      .enter().append("div")
-        .attr("class", "radio")
-        .on("click", function(d) {
-          shotType = d;
-        })
-      .append("label");
+    // Set the data for this event
+    const data = {
+      x: x,
+      y: y,
+      xNorm: x / width,
+      yNorm: y / height,
+      playerName: player.name,
+      pointType: pointType,
+      shotType: shotType
+    };
 
-    shotEnter.append("input")
-        .attr("type", "radio")
-        .attr("name", "shotTypeRadio")
-        .attr("value", function(d) { return d; })
-        .property("defaultChecked", function(d) { return d === shotType; });
-
-    shotEnter.append("span")
-        .text(function(d) { return d; });
-
-    var w = shapeSize * 2,
-        h = shapeSize * 2;
-
-    shotEnter.filter(function(d) {
-      return d !== "remove";
-    }).append("svg")
-        .attr("width", w)
-        .attr("height", h)
-      .append("g")
+    // Draw the event
+    const g = svg.append("g").datum(data)
         .attr("class", "event")
-        .attr("transform", function(d) {
-          return "translate(" + (w / 2) + "," + (h / 2) + ")";
-        })
-      .append("path")
-        .attr("d", function(d) {
-          return getShape(d)();
+        .attr("transform", d => "translate(" + d.x + "," + d.y + ")")
+        .on("click", function() {
+          if (shotType === "remove") {
+            d3.event.stopPropagation();
+
+            d3.select(this).remove();
+
+            return;
+          }
         });
 
-    // Download button
-    d3.select("#downloadButton").on("click", function() {
-      var data = [],
-          columns = [];
+    g.append("path")
+        .attr("d", d => getShape(d.shotType)())
+        .style("fill", d => eventColor(d.pointType));
 
-      // Get event data
-      d3.select("#clickMap").selectAll(".event").each(function(d, i) {
-        if (i === 0) {
-          // Get columns from first event
-          columns = d3.keys(d);
-          data = columns.join(",") + "\n";
-        }
-
-        // Add event data
-        data += columns.map(function(column) {
-          return d[column];
-        }).join(",") + "\n";
-      });
-
-      // Create temporary download link for data
-      var a = window.document.createElement('a');
-      a.href = window.URL.createObjectURL(new Blob([data], {type: 'text/csv'}));
-      a.download = d3.select("#filenameInput").property("value");
-
-      // Append anchor to body
-      document.body.appendChild(a)
-      a.click();
-
-      // Remove anchor from body
-      document.body.removeChild(a)
-    });
-
-    // Clear button
-    d3.select("#clearButton").on("click", function() {
-      d3.select("#clickMap").selectAll(".event").remove();
-    });
-  }
-
-  function createClickMap() {
-    d3.select("#clickMap").select("img").on("click", function() {
-      d3.event.preventDefault();
-    });
-
-    // Select the svg element
-    var svg = d3.select("#clickMap").select("svg");
-
-    // Get the width and height
-    var width = parseInt(svg.style("width"), 10),
-        height = parseInt(svg.style("height"), 10);
-
-    // Receive click events from background
-    svg.on("click", function() {
-      if (shotType === "remove") return;
-
-      var x = d3.mouse(this)[0],
-          y = d3.mouse(this)[1];
-
-      // Set the data for this event
-      var data = {
-        x: x,
-        y: y,
-        xNorm: x / width,
-        yNorm: y / height,
-        playerName: player.name,
-        pointType: pointType,
-        shotType: shotType
-      };
-
-      // Draw the event
-      svg.append("g").datum(data)
-          .attr("class", "event")
-          .attr("transform", function(d) {
-            return "translate(" + d.x + "," + d.y + ")";
-          })
-          .on("click", function() {
-            if (shotType === "remove") {
-              d3.event.stopPropagation();
-
-              d3.select(this).remove();
-
-              return;
-            }
-          })
-        .append("path")
-          .attr("d", function(d) {
-            return getShape(d.shotType)();
-          })
-          .style("fill", function(d) {
-            return eventColor(d.pointType);
-          });
-    });
-  }
-});
+    g.append("title")
+        .text(d => d.playerName);
+  });
+}
 
 function getShape(shotType) {
   return d3.symbol()
