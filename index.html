@@ -6,7 +6,7 @@
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
   <script src="https://d3js.org/d3.v4.min.js"></script>
 
   <style>
@@ -72,8 +72,12 @@
 <div class="container-fluid">
   <div class="row">
     <div class="col-md-2">
+      <div class="input-group">
+        <label class="custom-file-label" for="rosterUpload">Upload Roster</label>
+        <input id="rosterUpload" type="file"></input>
+      </div>
       <div class="form-group">
-        <label for="playerSelect">Player</label><br>
+        <label for="playerSelect">Player</label>
         <select id="playerSelect" class="form-control"></select>
       </div>
       <div class="form-group">
@@ -85,7 +89,7 @@
         <div id="shotTypeButtons" class="btn-group"></div>
       </div>
       <div class="form-group">
-        <label for="filenameInput">Output Filename</label><br>
+        <label for="filenameInput">Output Filename</label>
         <input id="filenameInput" type="text" class="form-control" value="Click Map.csv">
       </div>
       <button id="downloadButton" class="btn btn-primary">Download Data</button>
