@@ -186,7 +186,7 @@ function createControls() {
   const pointEnter = d3.select("#pointTypeButtons").selectAll(".form-check")
       .data(pointTypes)
     .enter().append("div")
-      .attr("class", "form-check pl-4")
+      .attr("class", "form-check pl-4 mb-1")
       .style("background-color", d => {
         const c = d3.color(eventColor(d));
         c.opacity = 0.75;
