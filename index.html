@@ -3,10 +3,10 @@
 <head>
   <title>Click Map</title>
 
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
   <script src="https://d3js.org/d3.v4.min.js"></script>
 
   <style>
@@ -48,19 +48,6 @@
       visibility: hidden;
       pointer-events: all;
     }
-
-    .radio {
-      padding-left: 10px;
-      padding-right: 15px;
-    }
-
-    .radio span {
-      vertical-align: top;
-    }
-
-    .radio svg {
-      margin-left: 5px;
-    }
   </style>
 </head>
 
@@ -72,17 +59,17 @@
 <div class="container-fluid">
   <div class="row">
     <div class="col-md-2">
-      <div class="input-group">
+      <div class="custom-file mb-3">
+        <input id="rosterUpload" type="file" class="custom-file-input"></input>
         <label class="custom-file-label" for="rosterUpload">Upload Roster</label>
-        <input id="rosterUpload" type="file"></input>
       </div>
       <div class="form-group">
         <label for="playerSelect">Player</label>
         <select id="playerSelect" class="form-control"></select>
       </div>
       <div class="form-group">
-        <label for="pointTypeButtons">Points</label><br>
-        <div id="pointTypeButtons" class="btn-group"></div>
+        <label for="pointTypeButtons">Points</label>
+        <div id="pointTypeButtons"></div>
       </div>
       <div class="form-group">
         <label for="shotTypeButtons">Shot Type</label><br>
@@ -174,10 +161,10 @@ d3.text(rosterFileName, function(error, rosterData) {
         .text(function(d) { return "#" + d.number + " " + d.name; });
 
     // Radio buttons for points
-    var pointEnter = d3.select("#pointTypeButtons").selectAll(".radio")
+    var pointEnter = d3.select("#pointTypeButtons").selectAll(".form-check")
         .data(pointTypes)
       .enter().append("div")
-        .attr("class", "radio")
+        .attr("class", "form-check pl-4")
         .style("background-color", function(d) {
           var c = d3.color(eventColor(d));
           c.opacity = 0.75;
@@ -187,17 +174,20 @@ d3.text(rosterFileName, function(error, rosterData) {
         .style("border-radius", "5px")
         .on("click", function(d) {
           pointType = d;
-        })
-      .append("label");
+        });
 
     pointEnter.append("input")
         .attr("type", "radio")
-        .attr("name", "pointTypeRadio")
+        .attr("class", "form-check-input")
+        .attr("name", "pointTypeRadios")
+        .attr("id", function(d) { return d + "_radio"; })
         .attr("value", function(d) { return d; })
         .property("defaultChecked", function(d) { return d === pointType; });
 
-    pointEnter.append("span")
-        .text(function(d) { return d; });
+    pointEnter.append("label")
+        .text(function(d) { return d; })
+        .attr("class", "form-check-label")
+        .attr("for", function(d) { return d + "_radio"; });
 
     // Radio buttons for shot types
     var shotEnter = d3.select("#shotTypeButtons").selectAll(".radio")
