@@ -15,10 +15,21 @@
       overflow-y: hidden;
     }
 
+    .mainDiv { 
+      margin-left: 5%;
+      width: 90%;
+    }
+
     #clickMap {
       position: relative;
-      margin-left: 10%;
-      width: 80%;
+    }
+
+    .ownHalf {
+      background-color: #fddbc7;
+    }
+
+    .opponentHalf {
+      background-color: #d1e5f0;
     }
 
     .image {
@@ -74,7 +85,6 @@
       <div class="form-group">
         <label for="yardageTypeButtons">Yardage</label>
         <div id="yardageTypeButtons"></div>
-
         <button id="clearButton" class="btn btn-primary">Clear All</button>
       </div>
       <div class="form-group">
@@ -84,13 +94,22 @@
       </div>
     </div>
     <div class="col-md-9">
-      <div class="panel panel-default">
-        <div id="clickMap">
-          <img src="./images/football.png" class="image" draggable="false" />
-          <div class="svgDiv">
-            <svg width="100%" height="100%">
-              <rect class="background" width="100%" height="100%" />
-            </svg>
+      <div class="mainDiv">
+        <div class="row text-center">
+          <div class="col-md-5"><h2 class="leftHalf ownHalf">Own</h2></div>
+          <div class="col-md-2"><button id="switchButton" class="btn btn-primary">Switch</button></div>
+          <div class="col-md-5"><h2 class="rightHalf opponentHalf">Opponent</h2></div>
+        </div>
+        <div class="row">
+          <div class="col-md-12">
+            <div id="clickMap">
+              <img src="./images/football.png" class="image" draggable="false" />
+              <div class="svgDiv">
+                <svg width="100%" height="100%">
+                  <rect class="background" width="100%" height="100%" />
+                </svg>
+              </div>
+            </div>          
           </div>
         </div>
       </div>
@@ -125,6 +144,8 @@ const eventShape = d3.scaleOrdinal()
     .range(d3.symbols);
 
 const shapeSize = 10;
+
+let ownLeft = true;
 
 // Roster
 let roster = [];
@@ -169,13 +190,8 @@ function createControls() {
       .property("disabled", roster.length === 0)
       .on("change", function() {
         player = getPlayer(this.value);
-        
-        d3.select("#clickMap").select("svg").selectAll(".event")
-          .attr("transform", d => {
-            const scale = d.playerName === player.name ? 1 : 0.5;
 
-            return "translate(" + d.x + "," + d.y + ")scale(" + scale + ")";
-          });
+        updateEvents();
       })
     .selectAll("option")
       .data(roster);
@@ -280,6 +296,35 @@ function createControls() {
   d3.select("#clearButton").on("click", () => {
     d3.select("#clickMap").selectAll(".event").remove();
   });
+
+  // Switch button
+  d3.select("#switchButton").on("click", () => {
+    ownLeft = !ownLeft;
+
+    d3.select(".leftHalf")
+        .classed("ownHalf", ownLeft)
+        .classed("opponentHalf", !ownLeft)
+        .text(ownLeft ? "Own" : "Opponent");
+
+    d3.select(".rightHalf")
+        .classed("ownHalf", !ownLeft)
+        .classed("opponentHalf", ownLeft)
+        .text(ownLeft ? "Opponent" : "Own");    
+
+    updateEvents();
+  });
+}
+
+function updateEvents() {
+  // Select the svg element
+  const svg = d3.select("#clickMap").select("svg");
+
+  // Get the width and height
+  const width = parseInt(svg.style("width"), 10);
+  const height = parseInt(svg.style("height"), 10);
+
+  svg.selectAll(".event")
+      .attr("transform", d => eventTransform(d, width, height));
 }
 
 function createClickMap() {
@@ -300,7 +345,10 @@ function createClickMap() {
 
     if (yardageType === "remove") return;
 
-    const x = d3.mouse(this)[0];
+    // Store x in own coordinate system
+    let x = d3.mouse(this)[0];
+    if (!ownLeft) x = width - x;
+
     const y = d3.mouse(this)[1];
 
     // Set the data for this event
@@ -318,7 +366,7 @@ function createClickMap() {
     // Draw the event
     const g = svg.append("g").datum(data)
         .attr("class", "event")
-        .attr("transform", d => "translate(" + d.x + "," + d.y + ")")
+        .attr("transform", d => eventTransform(d, width, height))
         .on("click", function() {
           if (yardageType === "remove") {
             d3.event.stopPropagation();
@@ -342,6 +390,17 @@ function getShape(yardageType) {
   return d3.symbol()
     .type(eventShape(yardageType))
     .size(shapeSize * shapeSize);
+}
+
+function eventTransform(d, width, height) {
+  let x = d.xNorm * width;
+  if (!ownLeft) x = width - x;
+
+  const y = d.yNorm * height;
+
+  const scale = d.playerName === player.name ? 1 : 0.5;
+
+  return "translate(" + x + "," + y + ")scale(" + scale + ")";
 }
 
 </script>
