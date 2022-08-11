@@ -23,7 +23,7 @@
   </div>
   <div class="container-fluid">
     <div class="row">
-      <div class="col-md-3">
+      <div class="col-md-4">
         <div class="custom-file mb-3">
           <input id="rosterUpload" type="file" class="custom-file-input"></input>
           <label class="custom-file-label" for="rosterUpload">Upload Roster</label>
@@ -32,29 +32,40 @@
           <label for="playerSelect">Player</label>
           <select id="playerSelect" class="form-control"></select>
         </div>
-        <div class="form-group">
-          <label for="playTypeButtons">Play</label>
-          <div id="playTypeButtons"></div>
+
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-7">
+              <div class="form-group">
+                <label for="playTypeButtons">Play</label>
+                <div id="playTypeButtons"></div>
+              </div>
+            </div>
+            <div class="col-5">
+              <div class="form-group">
+                <label for="yardageTypeButtons">Yardage</label>
+                <div id="yardageTypeButtons"></div>
+
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="form-group">
-          <label for="yardageTypeButtons">Yardage</label>
-          <div id="yardageTypeButtons"></div>
-          <button id="clearButton">Clear All</button>
-        </div>
+        <button id="clearButton" class="btn btn-primary mb-3">Clear All</button>
+
         <div class="form-group">
           <label for="filenameInput">Output Filename</label>
-          <input id="filenameInput" type="text" class="form-control mb-1" value="Click Map.csv">
-          <button id="downloadButton">Download Data</button>
+          <input id="filenameInput" type="text" class="form-control mb-3" value="Click Map.csv">
+          <button id="downloadButton" class="btn btn-primary mb-3">Download Data</button>
         </div>
       </div>
-      <div class="col-md-9">
+      <div class="col-md-8">
         <div class="mainDiv">
           <div class="row text-center">
-            <div class="col-5">
+            <div class="col-md-5 mb-3">
               <h2 class="leftHalf ownHalf">Own</h2>
             </div>
-            <div class="col-2"><button id="switchButton">Switch</button></div>
-            <div class="col-5">
+            <div style="padding: 0;" class="col-md-2 mb-3"><button id="switchButton" class="btn btn-primary">Switch</button></div>
+            <div class="col-md-5 mb-3">
               <h2 class="rightHalf opponentHalf">Opponent</h2>
             </div>
           </div>
