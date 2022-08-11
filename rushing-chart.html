@@ -2,80 +2,21 @@
 <html>
 
 <head>
-  <title>Rushing Chart</title>
+  <title>Football - Defense Chart</title>
 
-  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="./charts.css" />
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
   <script src="https://d3js.org/d3.v4.min.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:ital,wght@0,300;0,700;1,700&display=swap"
-    rel="stylesheet">
 
-  <style>
-    body,
-    html {
-      height: 100%;
-      overflow-y: hidden;
-    }
 
-    .mainDiv {
-      margin-left: 5%;
-      width: 90%;
-    }
-
-    #clickMap {
-      position: relative;
-    }
-
-    .ownHalf {
-      background-color: #fddbc7;
-    }
-
-    .opponentHalf {
-      background-color: #d1e5f0;
-    }
-
-    .image {
-      width: 100%;
-      height: auto;
-      -webkit-user-select: none;
-      /* Chrome all / Safari all */
-      -moz-user-select: none;
-      /* Firefox all */
-      -ms-user-select: none;
-      /* IE 10+ */
-      user-select: none;
-      /* Likely future */
-    }
-
-    .svgDiv {
-      position: absolute;
-      top: 0;
-      left: 0;
-      height: 100%;
-      width: 100%;
-    }
-
-    .event {
-      fill-opacity: 0.75;
-      stroke: black;
-      stroke-opacity: 0.75;
-    }
-
-    .background {
-      visibility: hidden;
-      pointer-events: all;
-    }
-  </style>
 </head>
 
 <body>
 
-  <div class="text-center mb-5">
-    <h1 class="display-1">Football - Defense Chart</h1>
+  <div class="text-left my-3 ml-3">
+    <h1 class="display-1">Rushing Charts</h1>
   </div>
   <div class="container-fluid">
     <div class="row">
@@ -95,22 +36,22 @@
         <div class="form-group">
           <label for="yardageTypeButtons">Yardage</label>
           <div id="yardageTypeButtons"></div>
-          <button id="clearButton" class="btn btn-primary">Clear All</button>
+          <button id="clearButton">Clear All</button>
         </div>
         <div class="form-group">
           <label for="filenameInput">Output Filename</label>
           <input id="filenameInput" type="text" class="form-control mb-1" value="Click Map.csv">
-          <button id="downloadButton" class="btn btn-primary">Download Data</button>
+          <button id="downloadButton">Download Data</button>
         </div>
       </div>
       <div class="col-md-9">
         <div class="mainDiv">
           <div class="row text-center">
-            <div class="col-md-5">
+            <div class="col-5">
               <h2 class="leftHalf ownHalf">Own</h2>
             </div>
-            <div class="col-md-2"><button id="switchButton" class="btn btn-primary">Switch</button></div>
-            <div class="col-md-5">
+            <div class="col-2"><button id="switchButton">Switch</button></div>
+            <div class="col-5">
               <h2 class="rightHalf opponentHalf">Opponent</h2>
             </div>
           </div>
@@ -119,7 +60,7 @@
               <div id="clickMap">
                 <img src="./images/football.png" class="image" draggable="false" />
                 <div class="svgDiv">
-                  <svg width="100%" height="100%">
+                  <svg viewBox="0 0 640 309">
                     <rect class="background" width="100%" height="100%" />
                   </svg>
                 </div>
@@ -141,11 +82,11 @@
     let player = null;
 
     // Add play types here
-    const playTypes = ["Rushing tackle", "Rushing missed tackle", "Reception tackle", "Reception missed tackle", "Interception", "Interception dropped"];
+    const playTypes = ["Complete Pass", "Incomplete Pass"];
     let playType = playTypes[0];
 
     // Add yardage types here
-    const yardageTypes = ["0-5", "6-10", "11-15", "16-20", "> 20"];
+    const yardageTypes = ["< 0", "0-5", "6-10", "11-15", "16-20", "> 20"];
     let yardageType = yardageTypes[0];
 
     // Set up color and shape
@@ -334,8 +275,8 @@
       const svg = d3.select("#clickMap").select("svg");
 
       // Get the width and height
-      const width = parseInt(svg.style("width"), 10);
-      const height = parseInt(svg.style("height"), 10);
+      const width = 640;
+      const height = 309;
 
       svg.selectAll(".event")
         .attr("transform", d => eventTransform(d, width, height));
@@ -356,8 +297,8 @@
         if (yardageType === "remove") return;
 
         // Get the width and height
-        const width = parseInt(svg.style("width"), 10);
-        const height = parseInt(svg.style("height"), 10);
+        const width = 640;
+        const height = 309;
 
         // Store x in own coordinate system
         let x = d3.mouse(this)[0];
@@ -376,6 +317,8 @@
           playType: playType,
           yardageType: yardageType
         };
+
+        console.log(data)
 
         // Draw the event
         const g = svg.append("g").datum(data)
@@ -403,7 +346,7 @@
     function getShape(yardageType) {
       return d3.symbol()
         .type(eventShape(yardageType))
-        .size(shapeSize * shapeSize);
+        .size(10 * 10);
     }
 
     function eventTransform(d, width, height) {
