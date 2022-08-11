@@ -319,6 +319,7 @@ function updateEvents() {
   // Select the svg element
   const svg = d3.select("#clickMap").select("svg");
 
+
   // Get the width and height
   const width = parseInt(svg.style("width"), 10);
   const height = parseInt(svg.style("height"), 10);
@@ -335,6 +336,7 @@ function createClickMap() {
   // Select the svg element
   const svg = d3.select("#clickMap").select("svg");
 
+
   // Receive click events from background
   svg.on("click", function() {
     if (!player) return;
@@ -345,9 +347,11 @@ function createClickMap() {
     const width = parseInt(svg.style("width"), 10);
     const height = parseInt(svg.style("height"), 10);
 
+
     // Store x in own coordinate system
     let x = d3.mouse(this)[0];
     if (!ownLeft) x = width - x;
+
 
     const y = d3.mouse(this)[1];
 
