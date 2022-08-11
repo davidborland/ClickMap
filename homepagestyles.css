@@ -66,6 +66,11 @@ a {
 }
 
 .content-wrapper:nth-child(even) {
+    /**
+     will need to update image with something passing-related, reached out to 
+     Clarence to see if he might have anything we can use, quick search of the
+     site did not yield much
+     */
     background-image: url(https://dbukjj6eu5tsf.cloudfront.net/sidearm.sites/davidsonwildcats.com/images/2019/12/12/Sparks_Dylan.png);
     background-size: cover;
     background-position: 30%;
