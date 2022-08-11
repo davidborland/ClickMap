@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-  <title>Click Map</title>
+  <title>Football - Defense Chart</title>
 
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
 
@@ -15,10 +15,21 @@
       overflow-y: hidden;
     }
 
+    .mainDiv { 
+      margin-left: 5%;
+      width: 90%;
+    }
+
     #clickMap {
       position: relative;
-      margin-left: 10%;
-      width: 80%;
+    }
+
+    .ownHalf {
+      background-color: #fddbc7;
+    }
+
+    .opponentHalf {
+      background-color: #d1e5f0;
     }
 
     .image {
@@ -54,7 +65,7 @@
 <body>
 
 <div class="text-center mb-5">
-  <h1 class="display-1">Click Map</h1>
+  <h1 class="display-1">Football - Defense Chart</h1>
 </div>
 <div class="container-fluid">
   <div class="row">
@@ -68,13 +79,12 @@
         <select id="playerSelect" class="form-control"></select>
       </div>
       <div class="form-group">
-        <label for="pointTypeButtons">Points</label>
-        <div id="pointTypeButtons"></div>
+        <label for="playTypeButtons">Play</label>
+        <div id="playTypeButtons"></div>
       </div>
       <div class="form-group">
-        <label for="shotTypeButtons">Shot Type</label>
-        <div id="shotTypeButtons"></div>
-
+        <label for="yardageTypeButtons">Yardage</label>
+        <div id="yardageTypeButtons"></div>
         <button id="clearButton" class="btn btn-primary">Clear All</button>
       </div>
       <div class="form-group">
@@ -84,13 +94,22 @@
       </div>
     </div>
     <div class="col-md-9">
-      <div class="panel panel-default">
-        <div id="clickMap">
-          <img src="/images/basketballCourt.png" class="image" draggable="false" />
-          <div class="svgDiv">
-            <svg width="100%" height="100%">
-              <rect class="background" width="100%" height="100%" />
-            </svg>
+      <div class="mainDiv">
+        <div class="row text-center">
+          <div class="col-md-5"><h2 class="leftHalf ownHalf">Own</h2></div>
+          <div class="col-md-2"><button id="switchButton" class="btn btn-primary">Switch</button></div>
+          <div class="col-md-5"><h2 class="rightHalf opponentHalf">Opponent</h2></div>
+        </div>
+        <div class="row">
+          <div class="col-md-12">
+            <div id="clickMap">
+              <img src="./images/football.png" class="image" draggable="false" />
+              <div class="svgDiv">
+                <svg width="100%" height="100%">
+                  <rect class="background" width="100%" height="100%" />
+                </svg>
+              </div>
+            </div>          
           </div>
         </div>
       </div>
@@ -107,24 +126,26 @@
 // Current player
 let player = null;
 
-// Add point types here
-const pointTypes = ["3 pts", "2 pts", "0 (missed 3)", "0 (missed 2)"];
-let pointType = pointTypes[0];
+// Add play types here
+const playTypes = ["Rushing tackle", "Rushing missed tackle", "Reception tackle", "Reception missed tackle", "Interception", "Interception dropped"];
+let playType = playTypes[0];
 
-// Add shot types here
-const shotTypes = ["layup/dunk", "dribble jumper", "catch & shoot", "runner/floater", "post move", "remove"];
-let shotType = shotTypes[0];
+// Add yardage types here
+const yardageTypes = ["0-5", "6-10", "11-15", "16-20", "> 20"];
+let yardageType = yardageTypes[0];
 
 // Set up color and shape
 const eventColor = d3.scaleOrdinal()
-    .domain(pointTypes)
+    .domain(playTypes)
     .range(d3.schemeCategory10);
 
 const eventShape = d3.scaleOrdinal()
-    .domain(shotTypes)
+    .domain(yardageTypes)
     .range(d3.symbols);
 
 const shapeSize = 10;
+
+let ownLeft = true;
 
 // Roster
 let roster = [];
@@ -169,13 +190,8 @@ function createControls() {
       .property("disabled", roster.length === 0)
       .on("change", function() {
         player = getPlayer(this.value);
-        
-        d3.select("#clickMap").select("svg").selectAll(".event")
-          .attr("transform", d => {
-            const scale = d.playerName === player.name ? 1 : 0.5;
 
-            return "translate(" + d.x + "," + d.y + ")scale(" + scale + ")";
-          });
+        updateEvents();
       })
     .selectAll("option")
       .data(roster);
@@ -186,9 +202,9 @@ function createControls() {
 
   playerOption.exit().remove();
 
-  // Radio buttons for points
-  const pointEnter = d3.select("#pointTypeButtons").selectAll(".form-check")
-      .data(pointTypes)
+  // Radio buttons for plays
+  const playEnter = d3.select("#playTypeButtons").selectAll(".form-check")
+      .data(playTypes)
     .enter().append("div")
       .attr("class", "form-check pl-4 mb-1")
       .style("background-color", d => {
@@ -198,37 +214,37 @@ function createControls() {
       })
       .style("border", "1px solid rgba(0, 0, 0, 0.75")
       .style("border-radius", "5px")
-      .on("click", d => pointType = d);
+      .on("click", d => playType = d);
 
-  pointEnter.append("input")
+  playEnter.append("input")
       .attr("type", "radio")
       .attr("class", "form-check-input")
-      .attr("name", "pointTypeRadio")
+      .attr("name", "playTypeRadio")
       .attr("id", d => d + "_radio")
       .attr("value", d => d)
-      .property("defaultChecked", d => d === pointType);
+      .property("defaultChecked", d => d === playType);
 
-  pointEnter.append("label")
+  playEnter.append("label")
       .text(d => d)
       .attr("class", "form-check-label")
       .attr("for", d => d + "_radio");
 
-  // Radio buttons for shot types
-  const shotEnter = d3.select("#shotTypeButtons").selectAll(".form-check")
-      .data(shotTypes)
+  // Radio buttons for yardage types
+  const yardageEnter = d3.select("#yardageTypeButtons").selectAll(".form-check")
+      .data(yardageTypes)
     .enter().append("div")
       .attr("class", "form-check")
-      .on("click", d => shotType = d);
+      .on("click", d => yardageType = d);
 
-  shotEnter.append("input")
+  yardageEnter.append("input")
       .attr("type", "radio")
       .attr("class", "form-check-input")
-      .attr("name", "shotTypeRadio")
+      .attr("name", "yardageTypeRadio")
       .attr("id", d => d + "_radio")
       .attr("value", d => d)
-      .property("defaultChecked", d => d === shotType);
+      .property("defaultChecked", d => d === yardageType);
 
-  shotEnter.append("label")
+  yardageEnter.append("label")
       .text(d => d)
       .attr("class", "form-check-label mr-1")
       .attr("for", d => d + "_radio")
@@ -237,7 +253,7 @@ function createControls() {
   const w = shapeSize * 2;
   const h = shapeSize * 2;
 
-  shotEnter.filter(d => d !== "remove").append("svg")
+  yardageEnter.filter(d => d !== "remove").append("svg")
       .attr("width", w)
       .attr("height", h)
     .append("g")
@@ -280,6 +296,36 @@ function createControls() {
   d3.select("#clearButton").on("click", () => {
     d3.select("#clickMap").selectAll(".event").remove();
   });
+
+  // Switch button
+  d3.select("#switchButton").on("click", () => {
+    ownLeft = !ownLeft;
+
+    d3.select(".leftHalf")
+        .classed("ownHalf", ownLeft)
+        .classed("opponentHalf", !ownLeft)
+        .text(ownLeft ? "Own" : "Opponent");
+
+    d3.select(".rightHalf")
+        .classed("ownHalf", !ownLeft)
+        .classed("opponentHalf", ownLeft)
+        .text(ownLeft ? "Opponent" : "Own");    
+
+    updateEvents();
+  });
+}
+
+function updateEvents() {
+  // Select the svg element
+  const svg = d3.select("#clickMap").select("svg");
+
+
+  // Get the width and height
+  const width = parseInt(svg.style("width"), 10);
+  const height = parseInt(svg.style("height"), 10);
+
+  svg.selectAll(".event")
+      .attr("transform", d => eventTransform(d, width, height));
 }
 
 function createClickMap() {
@@ -290,17 +336,23 @@ function createClickMap() {
   // Select the svg element
   const svg = d3.select("#clickMap").select("svg");
 
+
   // Receive click events from background
   svg.on("click", function() {
     if (!player) return;
 
-    if (shotType === "remove") return;
+    if (yardageType === "remove") return;
     
     // Get the width and height
     const width = parseInt(svg.style("width"), 10);
     const height = parseInt(svg.style("height"), 10);
 
-    const x = d3.mouse(this)[0];
+
+    // Store x in own coordinate system
+    let x = d3.mouse(this)[0];
+    if (!ownLeft) x = width - x;
+
+
     const y = d3.mouse(this)[1];
 
     // Set the data for this event
@@ -311,16 +363,16 @@ function createClickMap() {
       yNorm: y / height,
       playerName: player.name,
       playerNumber: player.number,
-      pointType: pointType,
-      shotType: shotType
+      playType: playType,
+      yardageType: yardageType
     };
 
     // Draw the event
     const g = svg.append("g").datum(data)
         .attr("class", "event")
-        .attr("transform", d => "translate(" + d.x + "," + d.y + ")")
+        .attr("transform", d => eventTransform(d, width, height))
         .on("click", function() {
-          if (shotType === "remove") {
+          if (yardageType === "remove") {
             d3.event.stopPropagation();
 
             d3.select(this).remove();
@@ -330,18 +382,29 @@ function createClickMap() {
         });
 
     g.append("path")
-        .attr("d", d => getShape(d.shotType)())
-        .style("fill", d => eventColor(d.pointType));
+        .attr("d", d => getShape(d.yardageType)())
+        .style("fill", d => eventColor(d.playType));
 
     g.append("title")
         .text(d => "#" + d.playerNumber + " " + d.playerName);
   });
 }
 
-function getShape(shotType) {
+function getShape(yardageType) {
   return d3.symbol()
-    .type(eventShape(shotType))
+    .type(eventShape(yardageType))
     .size(shapeSize * shapeSize);
+}
+
+function eventTransform(d, width, height) {
+  let x = d.xNorm * width;
+  if (!ownLeft) x = width - x;
+
+  const y = d.yNorm * height;
+
+  const scale = d.playerName === player.name ? 1 : 0.5;
+
+  return "translate(" + x + "," + y + ")scale(" + scale + ")";
 }
 
 </script>
