@@ -336,6 +336,22 @@ function createClickMap() {
     g.append("title")
         .text(d => "#" + d.playerNumber + " " + d.playerName);
   });
+
+  // Handle resizing svg div
+  const resizeObserver = new ResizeObserver(entries => {
+    // Get the width and height
+    const width = parseInt(svg.style("width"), 10);
+    const height = parseInt(svg.style("height"), 10);
+
+    d3.select("#clickMap").selectAll(".event").each(function (d) {
+      d.x = d.xNorm * width;
+      d.y = d.yNorm * height;
+
+      d3.select(this).attr("transform", d => "translate(" + d.x + "," + d.y + ")")
+    });
+  });
+
+  resizeObserver.observe(document.querySelector(".svgDiv"));
 }
 
 function getShape(shotType) {
